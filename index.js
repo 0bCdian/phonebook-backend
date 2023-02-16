@@ -4,6 +4,7 @@ const app = express()
 const PORT = '3001'
 app.use(express.json())
 
+// Data
 // eslint-disable-next-line prefer-const
 let phonebook = [
   {
@@ -28,8 +29,18 @@ let phonebook = [
   },
 ]
 
+//* Routes
+
 app.get('/api/persons', (request, response) => {
   response.json(phonebook)
+})
+
+app.get('/info', (request, response) => {
+  const currentEntries = phonebook.length
+  const currentTime = Date()
+  const message = `<p>Phonebook has info for ${currentEntries} people</p> 
+      <p>${currentTime}</p>`
+  response.status(200).send(message)
 })
 
 // * launch server on port 3001
