@@ -37,9 +37,14 @@ app.get('/api/persons', (request, response) => {
 
 app.get('/api/persons/:id', (request, response) => {
   const id = Number(request.params.id)
-  const result = phonebook.find((person) => person.id === id)
-  response.json(result)
+  const result = phonebook.filter((person) => person.id === id)
+  if (result.length > 0) {
+    return response.json(result)
+  }
+  response.status(404)
 })
+
+
 
 app.get('/info', (request, response) => {
   const currentEntries = phonebook.length
