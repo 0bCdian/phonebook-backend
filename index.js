@@ -32,7 +32,7 @@ let phonebook = [
 //* Routes
 
 app.get('/api/persons', (request, response) => {
-  response.json(phonebook)
+  response.json(phonebook).end()
 })
 
 app.get('/api/persons/:id', (request, response) => {
@@ -41,17 +41,22 @@ app.get('/api/persons/:id', (request, response) => {
   if (result.length > 0) {
     return response.json(result)
   }
-  response.status(404)
+  response.status(404).end()
 })
 
-
+app.delete('/api/persons/:id', (request, response) => {
+  const id = Number(request.params.id)
+  const newPhonebook = phonebook.filter((person) => person.id !== id)
+  phonebook = newPhonebook
+  response.status(204).end()
+})
 
 app.get('/info', (request, response) => {
   const currentEntries = phonebook.length
   const currentTime = Date()
   const message = `<p>Phonebook has info for ${currentEntries} people</p> 
       <p>${currentTime}</p>`
-  response.status(200).send(message)
+  response.status(200).send(message).end()
 })
 
 // * launch server on port 3001
