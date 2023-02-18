@@ -4,7 +4,7 @@ const app = express()
 const PORT = '3001'
 app.use(express.json())
 
-// Data
+// ! Data
 // eslint-disable-next-line prefer-const
 let phonebook = [
   {
@@ -60,6 +60,10 @@ app.post('/api/persons', (request, response) => {
     return response.status(400).json({
       error: 'content missing',
     })
+  } else if (doesNameExists(userData.name, phonebook)) {
+    return response.status(400).json({
+      error: 'name must be unique',
+    })
   }
   const newPerson = {
     id: generateId(),
@@ -88,4 +92,9 @@ app.listen(PORT, () => {
 
 function generateId() {
   return Math.floor(Math.random() * 9999999999)
+}
+
+function doesNameExists(name, array) {
+  const exists = array.some((person) => person.name === name)
+  return exists
 }
