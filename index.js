@@ -51,6 +51,25 @@ app.delete('/api/persons/:id', (request, response) => {
   response.status(204).end()
 })
 
+app.post('/api/persons', (request, response) => {
+  const userData = request.body
+  if (
+    typeof userData.name === 'undefined' ||
+    typeof userData.number === 'undefined'
+  ) {
+    return response.status(400).json({
+      error: 'content missing',
+    })
+  }
+  const newPerson = {
+    id: generateId(),
+    name: userData.name,
+    number: userData.number,
+  }
+  phonebook = [...phonebook, newPerson]
+  response.json(newPerson)
+})
+
 app.get('/info', (request, response) => {
   const currentEntries = phonebook.length
   const currentTime = Date()
@@ -64,3 +83,9 @@ app.get('/info', (request, response) => {
 app.listen(PORT, () => {
   console.log('Listening on port: ', PORT)
 })
+
+//* Helper functions
+
+function generateId() {
+  return Math.floor(Math.random() * 9999999999)
+}
