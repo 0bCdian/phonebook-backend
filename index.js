@@ -19,8 +19,8 @@ app.use(express.json())
 app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms :data')
 )
-
-// ! Data
+app.use(express.static('build'))
+// * Data
 // eslint-disable-next-line prefer-const
 let phonebook = [
   {
