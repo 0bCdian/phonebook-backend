@@ -1,8 +1,9 @@
 // * Configuring the server
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cors')
 const app = express()
-const PORT = '3001'
+const PORT = process.env.PORT || 3001
 
 morgan.token('data', (req) => {
   const data = req.body
@@ -13,7 +14,7 @@ morgan.token('data', (req) => {
     return ' '
   }
 })
-
+app.use(cors())
 app.use(express.json())
 app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms :data')
@@ -97,7 +98,15 @@ app.get('/info', (request, response) => {
   response.status(200).send(message).end()
 })
 
-// * launch server on port 3001
+// * catch any errors
+
+app.use((request, response) => {
+  response.status(404).json({
+    error: 'not found',
+  })
+})
+
+// * launch server on port defined in env or 3001
 
 app.listen(PORT, () => {
   console.log('Listening on port: ', PORT)
