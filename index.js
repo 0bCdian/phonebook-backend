@@ -1,10 +1,11 @@
 // * Configuring the server
+require('./mongo')
+const Person = require('./models/Person.js')
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
 const PORT = process.env.PORT || 3001
-
 morgan.token('data', (req) => {
   const data = req.body
   const dataLength = Object.keys(data).length
@@ -20,54 +21,36 @@ app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms :data')
 )
 app.use(express.static('build'))
-// * Data
-// eslint-disable-next-line prefer-const
-let phonebook = [
-  {
-    id: 1,
-    name: 'Arto Hellas',
-    number: '040-123456',
-  },
-  {
-    id: 2,
-    name: 'Ada Lovelace',
-    number: '39-44-5323523',
-  },
-  {
-    id: 3,
-    name: 'Dan Abramov',
-    number: '12-43-234345',
-  },
-  {
-    id: 4,
-    name: 'Mary Poppendieck',
-    number: '39-23-6423122',
-  },
-]
 
-//* Routes
+//* Controllers
 
 app.get('/api/persons', (request, response) => {
-  response.json(phonebook).end()
+  Person.find({}).then((results) => response.json(results))
 })
 
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const result = phonebook.filter((person) => person.id === id)
-  if (result.length > 0) {
-    return response.json(result)
-  }
-  response.status(404).end()
+app.get('/api/persons/:id', (request, response, next) => {
+  const { id } = request.params
+  Person.findById(id)
+    .then((person) => {
+      if (person) {
+        return response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch((err) => next(err))
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const newPhonebook = phonebook.filter((person) => person.id !== id)
-  phonebook = newPhonebook
-  response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+  const { id } = request.params
+  Person.findByIdAndDelete(id)
+    .then(() => {
+      response.status(204).end()
+    })
+    .catch((err) => next(err))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const userData = request.body
   if (
     typeof userData.name === 'undefined' ||
@@ -76,26 +59,28 @@ app.post('/api/persons', (request, response) => {
     return response.status(400).json({
       error: 'content missing',
     })
-  } else if (doesNameExists(userData.name, phonebook)) {
-    return response.status(400).json({
-      error: 'name must be unique',
-    })
   }
-  const newPerson = {
-    id: generateId(),
+  const newPerson = new Person({
     name: userData.name,
     number: userData.number,
-  }
-  phonebook = [...phonebook, newPerson]
-  response.json(newPerson)
+  })
+  newPerson
+    .save()
+    .then((result) => {
+      response.json(result)
+    })
+    .catch((err) => next(err))
 })
 
-app.get('/info', (request, response) => {
-  const currentEntries = phonebook.length
-  const currentTime = Date()
-  const message = `<p>Phonebook has info for ${currentEntries} people</p> 
+app.get('/info', (request, response, next) => {
+  Person.find({})
+    .then((results) => {
+      const currentTime = Date()
+      const message = `<p>Phonebook has info for ${results.length} people</p> 
       <p>${currentTime}</p>`
-  response.status(200).send(message).end()
+      response.status(200).send(message).end()
+    })
+    .catch((err) => next(err))
 })
 
 // * catch any errors
@@ -106,19 +91,17 @@ app.use((request, response) => {
   })
 })
 
+app.use((err, request, response) => {
+  console.error(err)
+  console.log(err.name)
+  if (err.name === 'CastError') {
+    response.status(400).end()
+  } else {
+    response.status(500).end()
+  }
+})
 // * launch server on port defined in env or 3001
 
 app.listen(PORT, () => {
   console.log('Listening on port: ', PORT)
 })
-
-//* Helper functions
-
-function generateId() {
-  return Math.floor(Math.random() * 9999999999)
-}
-
-function doesNameExists(name, array) {
-  const exists = array.some((person) => person.name === name)
-  return exists
-}
