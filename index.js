@@ -1,4 +1,5 @@
 // * Configuring the server
+
 require('./mongo')
 const Person = require('./models/Person.js')
 const express = require('express')
@@ -83,7 +84,17 @@ app.get('/info', (request, response, next) => {
     .catch((err) => next(err))
 })
 
-// * catch any errors
+app.put('/api/persons/:id', (request, response, next) => {
+  const person = request.body
+  Person.findByIdAndUpdate(
+    person.id,
+    { number: person.number },
+    { new: true }
+  ).then((result) => response.json(result))
+  console.log(person)
+})
+
+// * Middleware error handling
 
 app.use((request, response) => {
   response.status(404).json({
@@ -100,7 +111,8 @@ app.use((err, request, response) => {
     response.status(500).end()
   }
 })
-// * launch server on port defined in env or 3001
+
+// * launch server
 
 app.listen(PORT, () => {
   console.log('Listening on port: ', PORT)
