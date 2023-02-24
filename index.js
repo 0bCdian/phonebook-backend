@@ -25,8 +25,10 @@ app.use(express.static('build'))
 
 //* Controllers
 
-app.get('/api/persons', (request, response) => {
-  Person.find({}).then((results) => response.json(results))
+app.get('/api/persons', (request, response, next) => {
+  Person.find({})
+    .then((results) => response.json(results))
+    .catch((err) => next(err))
 })
 
 app.get('/api/persons/:id', (request, response, next) => {
