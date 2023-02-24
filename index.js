@@ -53,16 +53,8 @@ app.delete('/api/persons/:id', (request, response, next) => {
     .catch((err) => next(err))
 })
 
-app.post('/api/persons', (request, response, next) => {
+app.post('/api/persons', (request, response) => {
   const userData = request.body
-  if (
-    typeof userData.name === 'undefined' ||
-    typeof userData.number === 'undefined'
-  ) {
-    return response.status(400).json({
-      error: 'content missing',
-    })
-  }
   const newPerson = new Person({
     name: userData.name,
     number: userData.number,
@@ -72,7 +64,12 @@ app.post('/api/persons', (request, response, next) => {
     .then((result) => {
       response.json(result)
     })
-    .catch((err) => next(err))
+    .catch((err) => {
+      const errorStatus = err.errors.number
+        ? err.errors.number.message
+        : err.errors.name.message
+      response.status(400).send(errorStatus).end()
+    })
 })
 
 app.get('/info', (request, response, next) => {
@@ -91,9 +88,15 @@ app.put('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndUpdate(
     person.id,
     { number: person.number },
-    { new: true }
-  ).then((result) => response.json(result))
-  console.log(person)
+    { new: true, runValidators: true, context: 'query' }
+  )
+    .then((result) => response.json(result))
+    .catch((err) => {
+      const errorStatus = err.errors.number
+        ? err.errors.number.message
+        : err.errors.name.message
+      response.status(400).send(errorStatus).end()
+    })
 })
 
 // * Middleware error handling
@@ -106,7 +109,6 @@ app.use((request, response) => {
 
 app.use((err, request, response) => {
   console.error(err)
-  console.log(err.name)
   if (err.name === 'CastError') {
     response.status(400).end()
   } else {
